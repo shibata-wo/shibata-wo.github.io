@@ -449,10 +449,10 @@ div#archive {
 /* 引入iconfont自定义图标（店长） */
 @import "//at.alicdn.com/t/font_2264842_b004iy0kk2b.css";
 
-.layout {
+/* .layout {
   max-width: 1800px !important;
   width: 95% !important;
-}
+} */
 
 /* 侧边卡片栏宽度 */
 .aside-content {
@@ -550,3 +550,59 @@ div#archive {
     flex:1 !important;
     min-width:0;
 }
+
+/* =========================
+   手机端布局修复
+========================= */
+
+@media screen and (max-width:768px){
+
+    html,
+    body{
+        width:100%;
+        overflow-x:hidden !important;
+    }
+
+
+    #page,
+    #content-inner,
+    .layout{
+        width:100% !important;
+        max-width:100% !important;
+        margin:0 auto !important;
+        padding:0 8px !important;
+    }
+
+
+    /* 首页文章区域 */
+    #recent-posts{
+        width:100% !important;
+        flex:none !important;
+    }
+
+
+    /* 取消侧栏固定宽度 */
+    #aside-content{
+        width:100% !important;
+        max-width:100% !important;
+        flex:none !important;
+    }
+
+
+    .aside-content{
+        width:100% !important;
+        max-width:100% !important;
+    }
+
+
+    /* 卡片圆角缩小 */
+    #recent-posts > .recent-post-item,
+    #aside-content .card-widget,
+    div#post,
+    div#page,
+    div#archive{
+        border-radius:15px;
+    }
+
+}
+
