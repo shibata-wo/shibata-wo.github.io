@@ -70,8 +70,10 @@ body {
   padding: 4px 18px !important;
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  width: fit-content !important;
-  max-width: calc(100% - 48px);
+  /* width: fit-content !important;
+  max-width: calc(100% - 48px); */
+  width: auto !important;
+  min-width: 720px;
   left: 50% !important;
   transform: translateX(-50%) !important;
   top: 14px;
