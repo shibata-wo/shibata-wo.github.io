@@ -5,7 +5,7 @@ backend:
   name: github
   repo: shibata-wo/hexo-source
   branch: main
-  base_url: https://hexo-oauth-provider.vercel.app   # 部署 OAuth 代理后替换此处
+  base_url: https://hexo-source-puce.vercel.app   # 部署 OAuth 代理后替换此处
   auth_endpoint: api/auth
 
 # 本地开发模式（可选，测试时使用）
