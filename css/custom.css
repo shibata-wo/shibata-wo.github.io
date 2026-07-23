@@ -122,9 +122,21 @@ body {
    3. 玻璃遮罩层 — 仿 InternalBeyond #splash 淡蓝色水滴玻璃
    仅作用于首页标题页 #page-header.full_page，不影响文章页 / 双侧栏页
    ----------------------------------------------------------- */
+/* #page-header.full_page {
+  position: relative;
+  overflow: hidden;
+} */
+/* 补充---首页标题页遮罩透明 — 让雾面玻璃层顶替原有暗色蒙版 */
+#page-header.full_page { background: transparent !important; }
+#page-header.full_page::before { background: transparent !important; z-index: auto !important; }
+#page-header.full_page::after { display: none !important; }
+
 #page-header.full_page {
   position: relative;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 1;
 }
 
 /* 让标题文字、导航箭头始终盖在雾面玻璃与雨滴层之上 */
@@ -176,11 +188,6 @@ body {
     radial-gradient(circle 14px at 92% 35%, rgba(200, 225, 255, 0.02) 0%, transparent 60%);
   pointer-events: none;
 }
-
-/* 首页标题页遮罩透明 — 让雾面玻璃层顶替原有暗色蒙版 */
-#page-header.full_page { background: transparent !important; }
-#page-header.full_page::before { background: transparent !important; z-index: auto !important; }
-#page-header.full_page::after { display: none !important; }
 
 /* -----------------------------------------------------------
    4. 雨滴动画 — 仿 InternalBeyond #rain-container（Canvas 物理雨丝）
@@ -435,4 +442,54 @@ div#post, div#page, div#archive {
   div#post, div#page, div#archive { border-radius: 22px !important; }
   #music-drawer { width: 100% !important; max-width: 100vw; right: -100vw; }
   .music-cover-wrap { width: 140px; height: 140px; }
+}
+
+/* =============================================
+   水波纹特效画布 - Hexo首页
+   鼠标左键拖动产生晕开效果
+   ============================================= */
+/* =============================================
+   首页首屏水波纹效果
+   作用于 #page-header.full_page 内部
+   ============================================= */
+/* 首页首屏水波纹特效 */
+#page-header.full_page {
+  position: relative;
+  overflow: hidden;
+}
+
+#header-water-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 15;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  display: block;
+  /* screen混合模式适配玻璃朦胧背景 */
+  mix-blend-mode: screen;
+}
+
+#header-water-canvas.show {
+  opacity: 1;
+}
+
+#header-water-handle {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 16;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* 减少动效适配 */
+@media (prefers-reduced-motion: reduce) {
+  #header-water-canvas,
+  #header-water-handle {
+    display: none !important;
+  }
 }
