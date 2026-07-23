@@ -493,3 +493,98 @@ div#post, div#page, div#archive {
     display: none !important;
   }
 }
+
+/* =============================================
+   自定义小灯泡滚动条（右侧专属滚动区）
+   ============================================= */
+#custom-scrollbar {
+  position: fixed;
+  top: 0;
+  right: 6px;
+  width: 24px;
+  height: 100vh;
+  z-index: 9999;
+  pointer-events: auto;
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.scroll-track {
+  position: relative;
+  width: 2px;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 1px;
+}
+
+/* 小灯泡滑块 */
+.scroll-thumb {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 0;
+  width: 22px;
+  height: 28px;
+  background: #ffd700;
+  border: 2px solid #000;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  cursor: grab;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.scroll-thumb:active {
+  cursor: grabbing;
+  transform: translateX(-50%) scale(1.1);
+}
+
+/* 灯泡灯头 */
+.scroll-thumb::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 6px;
+  background: #ffd700;
+  border: 2px solid #000;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+}
+
+/* 灯泡钨丝高光 */
+.scroll-thumb::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+}
+
+/* 内容不足一屏时隐藏滚动条 */
+#custom-scrollbar.hidden {
+  display: none;
+}
+
+/* 平板端波纹交互区补充：禁止默认触摸滚动，避免冲突 */
+#header-water-handle {
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+/* 深色模式适配滚动条 */
+[data-theme="dark"] .scroll-track {
+  background: rgba(255, 255, 255, 0.15);
+}
+[data-theme="dark"] .scroll-thumb {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}

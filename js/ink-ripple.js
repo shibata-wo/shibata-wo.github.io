@@ -1,14 +1,13 @@
 (function () {
   'use strict';
 
-  // ========== 可调配置【直接在这里微调效果】 ==========
+  // ========== 水波纹配置 ==========
   const CFG = {
-    DAMP: 0.992,        // 阻尼值越高，波纹消散越慢、持续更久
-    LIGHT: 100,          // 明暗对比度，数值越大波纹越清晰（解决效果不明显）
-    STEP: 1 / 36,       // 物理步长，降低速率，动画更舒缓
-    CLICK_STRENGTH: 2.2,// 点击扰动强度
-    DRAG_STRENGTH: 0.8, // 拖动扰动强度
-    // 波纹色彩：适配你的浅蓝冷调玻璃背景
+    DAMP: 0.992,
+    LIGHT: 100,
+    STEP: 1 / 36,
+    CLICK_STRENGTH: 2.2,
+    DRAG_STRENGTH: 0.8,
     COLOR_HIGHLIGHT: [235, 245, 255],
     COLOR_SHADOW: [110, 155, 200]
   };
@@ -27,24 +26,21 @@
   let stepAcc = 0;
   let ready = false;
 
-  let isDown = false;
+  let activePointerId = null;
   let lastPt = { x: 0, y: 0 };
   let rafId = null;
 
   // ========== 工具函数 ==========
   function rand(a, b) { return a + Math.random() * (b - a); }
 
-  // ========== 初始化入口 ==========
-  function init() {
+  // ========== 水波纹初始化 ==========
+  function initRipple() {
     header = document.querySelector('#page-header.full_page');
     if (!header) return;
-
-    // 防止重复创建
     if (document.getElementById('header-water-canvas')) return;
 
     dpr = Math.min(2, window.devicePixelRatio || 1);
 
-    // 创建画布与交互层
     canvas = document.createElement('canvas');
     canvas.id = 'header-water-canvas';
     header.appendChild(canvas);
@@ -59,14 +55,12 @@
 
     resize();
     window.addEventListener('resize', resize);
-    bindEvents();
+    bindRippleEvents();
     startLoop();
 
     requestAnimationFrame(() => canvas.classList.add('show'));
-    console.log("✅ 物理水波纹已加载（无白色光圈版本）");
   }
 
-  // ========== 尺寸重建 ==========
   function resize() {
     if (!header) return;
     ready = false;
@@ -94,14 +88,13 @@
     outImg = simCtx.createImageData(SW, SH);
 
     stepAcc = 0;
-    // 初始轻微水面起伏
     for (let i = 0; i < 4; i++) {
       poke(rand(2, SW - 2), rand(2, SH - 2), rand(0.3, 0.7), 3);
     }
     ready = true;
   }
 
-  // ========== 水面施加扰动（鼠标点击/拖动调用） ==========
+  // ========== 水面扰动 ==========
   function poke(cx, cy, str, rad) {
     if (!ready) return;
     cx |= 0; cy |= 0;
@@ -119,7 +112,7 @@
     }
   }
 
-  // ========== 水波物理迭代计算 ==========
+  // ========== 水波物理迭代 ==========
   function stepWater() {
     if (!ready) return;
     for (let y = 1; y < SH - 1; y++) {
@@ -131,13 +124,12 @@
         ) * CFG.DAMP;
       }
     }
-    // 交换前后帧缓冲区
     const t = h1;
     h1 = h2;
     h2 = t;
   }
 
-  // ========== 渲染水面（【重点】已彻底移除独立白色光圈绘制） ==========
+  // ========== 渲染水面 ==========
   function renderWater() {
     if (!ready || !outImg) return;
     const dst = outImg.data;
@@ -193,19 +185,24 @@
     };
   }
 
-  // ========== 鼠标交互绑定 ==========
-  function bindEvents() {
-    handle.addEventListener('mousedown', e => {
-      if (e.button !== 0) return;
-      isDown = true;
+  // ========== 波纹交互事件（Pointer 兼容鼠标+触摸） ==========
+  function bindRippleEvents() {
+    handle.addEventListener('pointerdown', e => {
+      // 仅主指针触发，避免多指误触
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      if (activePointerId !== null) return;
+
+      activePointerId = e.pointerId;
+      handle.setPointerCapture(e.pointerId);
+
       const p = getPos(e);
       lastPt = p;
       poke(p.sx, p.sy, CFG.CLICK_STRENGTH, 3);
       e.preventDefault();
     });
 
-    window.addEventListener('mousemove', e => {
-      if (!isDown) return;
+    handle.addEventListener('pointermove', e => {
+      if (e.pointerId !== activePointerId) return;
       const p = getPos(e);
       const dx = p.x - lastPt.x, dy = p.y - lastPt.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -218,11 +215,18 @@
         poke(tx, ty, CFG.DRAG_STRENGTH, 1.8);
       }
       lastPt = p;
+      e.preventDefault();
     });
 
-    const stop = () => { isDown = false; };
-    window.addEventListener('mouseup', stop);
-    window.addEventListener('mouseleave', stop);
+    const endPointer = e => {
+      if (e.pointerId !== activePointerId) return;
+      activePointerId = null;
+      try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
+    };
+
+    handle.addEventListener('pointerup', endPointer);
+    handle.addEventListener('pointercancel', endPointer);
+    handle.addEventListener('pointerleave', endPointer);
   }
 
   // ========== 主动画循环 ==========
@@ -245,7 +249,101 @@
     loop();
   }
 
-  // ========== 页面载入启动 + Hexo PJAX兼容 ==========
+  // ========== 自定义小灯泡滚动条 ==========
+  function initScrollbar() {
+    if (document.getElementById('custom-scrollbar')) return;
+
+    // 创建DOM
+    const bar = document.createElement('div');
+    bar.id = 'custom-scrollbar';
+    bar.innerHTML = `
+      <div class="scroll-track">
+        <div class="scroll-thumb"></div>
+      </div>
+    `;
+    document.body.appendChild(bar);
+
+    const track = bar.querySelector('.scroll-track');
+    const thumb = bar.querySelector('.scroll-thumb');
+
+    let isDragging = false;
+    let dragStartY = 0;
+    let scrollStart = 0;
+    let trackHeight = 0;
+
+    // 更新滑块位置
+    function updateThumb() {
+      const scrollTop = window.scrollY;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      trackHeight = track.clientHeight;
+
+      if (scrollHeight <= 0) {
+        bar.classList.add('hidden');
+        return;
+      }
+      bar.classList.remove('hidden');
+
+      const ratio = scrollTop / scrollHeight;
+      const thumbOffset = ratio * (trackHeight - thumb.offsetHeight);
+      thumb.style.top = thumbOffset + 'px';
+    }
+
+    // 拖动逻辑
+    thumb.addEventListener('pointerdown', e => {
+      isDragging = true;
+      dragStartY = e.clientY;
+      scrollStart = window.scrollY;
+      thumb.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+
+    window.addEventListener('pointermove', e => {
+      if (!isDragging) return;
+      const dy = e.clientY - dragStartY;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const ratio = dy / (trackHeight - thumb.offsetHeight);
+      window.scrollTo({
+        top: Math.max(0, Math.min(scrollHeight, scrollStart + ratio * scrollHeight)),
+        behavior: 'auto'
+      });
+      e.preventDefault();
+    });
+
+    const endDrag = e => {
+      if (!isDragging) return;
+      isDragging = false;
+      try { thumb.releasePointerCapture(e.pointerId); } catch (_) {}
+    };
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+
+    // 点击轨道跳转
+    track.addEventListener('pointerdown', e => {
+      if (e.target === thumb) return;
+      const rect = track.getBoundingClientRect();
+      const clickY = e.clientY - rect.top - thumb.offsetHeight / 2;
+      const ratio = clickY / (trackHeight - thumb.offsetHeight);
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      window.scrollTo({
+        top: Math.max(0, Math.min(scrollHeight, ratio * scrollHeight)),
+        behavior: 'smooth'
+      });
+    });
+
+    // 监听滚动更新滑块
+    window.addEventListener('scroll', updateThumb, { passive: true });
+    window.addEventListener('resize', updateThumb);
+
+    // 初始化位置
+    setTimeout(updateThumb, 100);
+  }
+
+  // ========== 总入口 ==========
+  function init() {
+    initRipple();
+    initScrollbar();
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
